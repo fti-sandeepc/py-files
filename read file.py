@@ -16,7 +16,8 @@ new_path = os.path.join(os.getcwd(),relative_path)
 print("The new path is as follows:")
 print(new_path)
 -----------------------
+print("Reading entire file using for loop:")
 file_object = open(r'file', 'r')
 for current_line in file_object:
-print(current_line, end='')
+    print(current_line, end='')
 file_object.close()
