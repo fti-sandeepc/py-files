@@ -10,9 +10,11 @@ n = int(input("Enter the number of elements in the list:"))
 for i in range(0,n):       
     l.append(input("Enter the item:"))    
     list.remove(2)
+    del (my_list[3])
     len(l)
     max()
     min()
+    rev_tuple = tuple(reversed(my_tuple))
     
 tuple :
 # Creating a tuple    
@@ -30,8 +32,6 @@ except Exception as e:
     An integer index, enclosed in square brackets [index], can be used to access objects of both data types.
 
 
-
-
 ids = [1600,1500,1800,1900,1700]
 alist=ids
 sorted_ids=[]
@@ -42,7 +42,6 @@ def last_four(alist):
     return sorted(sorted_ids)
 
 print(last_four(alist))
-
 
 
     Days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}    
