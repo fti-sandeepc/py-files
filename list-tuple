@@ -1,0 +1,53 @@
+list :
+emp = [ "John", 102, "USA"]
+print(list[0:6])    
+# By default, the index value is 0 so its starts from the 0th element and go for index -1.    
+print(list[:])    
+print(list[2:5])    
+print(list[1:6:2]) 
+
+n = int(input("Enter the number of elements in the list:"))    
+for i in range(0,n):       
+    l.append(input("Enter the item:"))    
+    list.remove(2)
+    len(l)
+    max()
+    min()
+    
+tuple :
+# Creating a tuple    
+tuple_ = ("Python", "Tuple", "Ordered", "Immutable", "Collection", "Objects")    
+# Deleting a particular element of the tuple    
+try:     
+    del tuple_[3]    
+    print(tuple_)    
+except Exception as e:    
+    print(e)    
+
+    They both hold collections of items and are heterogeneous data types, meaning they can contain multiple data types simultaneously.
+    They're both ordered, which implies the items or objects are maintained in the same order as they were placed until changed manually.
+    Because they're both sequential data structures, we can iterate through the objects they hold; hence, they are iterables.
+    An integer index, enclosed in square brackets [index], can be used to access objects of both data types.
+
+
+
+
+ids = [1600,1500,1800,1900,1700]
+alist=ids
+sorted_ids=[]
+def last_four(alist):
+    for element in alist: 
+        values=str(element)
+        sorted_ids.append(values[1:4])
+    return sorted(sorted_ids)
+
+print(last_four(alist))
+
+
+
+    Days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}    
+    print(Days)    
+    print(type(Days))    
+    print("looping through the set elements ... ")    
+    for i in Days:    
+        print(i)    
