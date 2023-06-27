@@ -1,0 +1,156 @@
+import os
+import time
+import json
+import boto3
+
+
+base_folder = "/home/sandip/Downloads/data" 
+bucket_name = "sandy-s3-a" 
+aws_access_key_id = "AKIA3U7N46YGUASKIBL6"
+aws_secret_access_key = "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"
+aws_region = "us-east-1"
+
+
+s3 = boto3.client( "s3", aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=aws_region )
+
+
+
+def create_folder_if_not_exists(folder_path):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+def upload_file_to_s3(file_path, folder_name):
+
+    file_name = os.path.basename(file_path)
+    s3_key = f"data/"+file_name
+    s3.upload_file(file_path, bucket_name, s3_key)
+    s3_url = f"https://sandy-s3-a.s3.amazonaws.com/"+file_name
+    print(f"Uploaded file file1 to S3 bucket in folder data .")
+    return s3_url
+
+def create_metadata_file(file_path, folder_name, s3_url):
+   
+    file_name = os.path.basename(file_path)
+    file_size = os.path.getsize(file_path)
+    #file_type = os.path.splitext(file_path)[1]
+    file_type = file_name.split(".")[-1]
+    metadata = {
+        "file_name": file_name,
+        "file_size": file_size,
+        "file_type": file_type,
+        "upload_location": s3_url
+    }
+    metadata_folder = os.path.join(base_folder, "meta-data")
+    create_folder_if_not_exists(metadata_folder)
+    metadata_file_path = os.path.join(metadata_folder, f"{file_name}.json")
+    with open(metadata_file_path, "w") as metadata_file:
+        json.dump(metadata, metadata_file)
+    print(f"Created metadata file for '{file_name}'.")
+
+def delete_file(file_path):
+    os.remove(file_path)
+    print(f"Deleted file '{os.path.basename(file_path)}' from the local folder.")
+
+def monitor_folder(folder_name):
+    
+    print(f"Monitoring data folder for new files...")
+
+    folder_path = os.path.join(base_folder, folder_name)
+    create_folder_if_not_exists(folder_path)
+
+
+    files3 = set(os.listdir(folder_path))
+
+    while True:
+
+        time.sleep(5)
+
+
+        current_files3 = set(os.listdir(folder_path))
+
+
+        new_files3 = current_files3 - files3
+
+
+        for file in new_files3:
+            file_path = os.path.join(folder_path, file)
+            s3_url = upload_file_to_s3(file_path, folder_name)
+            create_metadata_file(file_path, folder_name, s3_url)
+            delete_file(file_path)
+
+        files3 = current_files3
+        monitor_folder2("images")
+
+
+def monitor_folder2(folder_name):
+    
+    print(f"Monitoring data folder for new files...")
+
+    folder_path = os.path.join(base_folder, folder_name)
+    create_folder_if_not_exists(folder_path)
+
+
+    files1 = set(os.listdir(folder_path))
+
+    while True:
+
+        time.sleep(5)
+
+
+        current_files1 = set(os.listdir(folder_path))
+
+
+        new_files1 = current_files1 - files1
+
+
+        for file in new_files1:
+            file_path = os.path.join(folder_path, file)
+            s3_url = upload_file_to_s3(file_path, folder_name)
+            create_metadata_file(file_path, folder_name, s3_url)
+            delete_file(file_path)
+
+        files1 = current_files1
+        monitor_folder3("videos")
+        
+ 
+def monitor_folder3(folder_name):
+    
+    print(f"Monitoring data folder for new files...")
+
+    folder_path = os.path.join(base_folder, folder_name)
+    create_folder_if_not_exists(folder_path)
+
+
+    files2 = set(os.listdir(folder_path))
+
+    while True:
+
+        time.sleep(5)
+
+
+        current_files2 = set(os.listdir(folder_path))
+
+
+        new_files2 = current_files2 - files2
+
+
+        for file in new_files2:
+            file_path = os.path.join(folder_path, file)
+            s3_url = upload_file_to_s3(file_path, folder_name)
+            create_metadata_file(file_path, folder_name, s3_url)
+            delete_file(file_path)
+
+        files2 = current_files2        
+        monitor_folder("texts")
+             
+
+create_folder_if_not_exists(base_folder)
+create_folder_if_not_exists(os.path.join(base_folder, "texts"))
+create_folder_if_not_exists(os.path.join(base_folder, "images"))
+create_folder_if_not_exists(os.path.join(base_folder, "videos"))
+
+
+monitor_folder("texts")
+
+
+#add clases, py i notify, 
