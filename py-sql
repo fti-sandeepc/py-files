@@ -1,0 +1,9 @@
+day 1:
+SELECT distinct('Country') FROM Customers;
+
+def say_hello(): 
+    li=["a",23,5566,435,"hello come here"]
+    return li
+
+k= say_hello()
+print(say_hello())
