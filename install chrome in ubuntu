@@ -1,0 +1,12 @@
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    sudo dpkg -i google-chrome-stable_current_amd64.deb
+   sudo apt-get -f install
+   sudo dnf install fedora-workstation-repositories
+ sudo dnf config-manager --set-enabled google-chrome
+sudo dnf config-manager --set-enabled google-chrome
+sudo dnf install fedora-workstation-repositories
+  sudo dnf config-manager --set-enabled google-chrome
+  sudo dnf install google-chrome-stable
+  clear
+  chrome install
+  sudo apt-get  install google-chrome-stable
