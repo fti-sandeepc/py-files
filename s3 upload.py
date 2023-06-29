@@ -6,7 +6,7 @@ import boto3
 
 base_folder = "/home/sandip/Downloads/data1" 
 bucket_name = "sandy-s3-a" 
-aws_access_key_id = "AKIA3U7N46YG52KLM7"
+aws_access_key_id = "A3U7N46YG52KLM7"
 aws_secret_access_key = "TXWNcpFe7Kp66I9NJW2b5biWo9nrJodLMAd1x"
 aws_region = "us-east-1"
 
