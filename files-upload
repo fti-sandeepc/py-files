@@ -1,0 +1,202 @@
+import os
+import time
+import json
+import boto3
+from inotify_simple import INotify, flags
+
+base_folder = "/home/sandip/Downloads/data"
+bucket_name = "sandy-s3-a"
+aws_access_key_id = "AKIAJKLM7"
+aws_secret_access_key = "TXWNcpFo9nrJodLMAd1x"
+aws_region = "us-east-1"
+
+class UploadConfigs:
+    """
+    Configuration class for uploader.
+    """
+    base_folder = base_folder
+    bucket_name = bucket_name
+    metadata_folder = os.path.join(base_folder, "meta-data")
+    allowed_extensions = {
+        "texts": [".txt"],
+        "images": [".jpg", ".jpeg", ".png"],
+        "videos": [".mp4", ".mov"]
+    }
+    max_file_age_seconds = 86400 # Maximum file age in seconds (24 hours)
+
+class S3Uploader:
+    """
+    Uploader class for uploading files to S3.
+    """
+
+    def __init__(self):
+        self.s3 = boto3.client(
+            "s3",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            region_name=aws_region
+        )
+        self.configs = UploadConfigs()
+        self.files_to_upload = []
+
+    def upload_file_to_s3(self, file_path, s3_key):
+        """
+        Uploads a file to the specified S3 bucket with the given key.
+        """
+        file_name = os.path.basename(file_path)
+        self.s3.upload_file(file_path, self.configs.bucket_name, s3_key)
+        print(f"Uploaded file '{file_name}' to S3 bucket.")
+
+    def delete_file(self, file_path):
+        """
+        Deletes a file from the local folder.
+        """
+        os.remove(file_path)
+
+    def create_metadata_file(self, file_path, s3_key):
+        """
+        Creates a metadata file with information about the uploaded file.
+        """
+        file_name = os.path.basename(file_path)
+        file_size = os.path.getsize(file_path)
+        file_type = os.path.splitext(file_name)[1].lstrip(".")
+        upload_location = f"s3://{self.configs.bucket_name}/{s3_key}"
+
+        metadata = {
+            "file_name": file_name,
+            "file_size": file_size,
+            "file_type": file_type,
+            "upload_location": upload_location
+        }
+
+        if not os.path.exists(self.configs.metadata_folder):
+            os.makedirs(self.configs.metadata_folder)
+
+        metadata_file_path = os.path.join(self.configs.metadata_folder, f"{file_name}.json")
+        with open(metadata_file_path, "w") as metadata_file:
+            json.dump(metadata, metadata_file, indent=4)
+
+        print(f"Created metadata file for '{file_name}'.")
+
+    def process_file(self, file_path, s3_key):
+        """
+        Processes a file by uploading it to S3, creating the metadata file, and then deleting it.
+        """
+        self.upload_file_to_s3(file_path, s3_key)
+        self.create_metadata_file(file_path, s3_key)
+        self.delete_file(file_path)
+
+    def upload_pending_files(self):
+        """
+        Uploads pending files in the files_to_upload list.
+        """
+        while self.files_to_upload:
+            file_path, s3_key = self.files_to_upload.pop(0)
+            self.process_file(file_path, s3_key)
+
+    def purge_old_files(self):
+        """
+        Purges files from the metadata folder that are older than the specified max_file_age_seconds.
+        """
+        current_time = time.time()
+        for file_name in os.listdir(self.configs.metadata_folder):
+            file_path = os.path.join(self.configs.metadata_folder, file_name)
+            file_age = current_time - os.path.getctime(file_path)
+            if file_age > self.configs.max_file_age_seconds:
+                os.remove(file_path)
+                print(f"Deleted metadata file '{file_name}' due to exceeding max file age.")
+
+class FileMonitor:
+    """
+    File monitor class to monitor file creation events.
+    """
+
+    def __init__(self, uploader):
+        self.uploader = uploader
+        self.inotify = INotify()
+        self.watch_descriptors = {}
+
+    def add_watch(self, folder_path):
+        """
+        Adds a watch to the specified folder for file creation events.
+        """
+        watch_flags = flags.CREATE
+        watch_descriptor = self.inotify.add_watch(folder_path, watch_flags)
+        self.watch_descriptors[watch_descriptor] = folder_path
+
+    def remove_watch(self, watch_descriptor):
+        """
+        Removes a watch for the specified watch descriptor.
+        """
+        self.inotify.rm_watch(watch_descriptor)
+        del self.watch_descriptors[watch_descriptor]
+
+    def handle_event(self, event):
+        """
+        Handles a file creation event.
+        """
+        folder_path = self.watch_descriptors[event.wd]
+        file_name = event.name
+        file_path = os.path.join(folder_path, file_name)
+
+        for folder, extensions in self.uploader.configs.allowed_extensions.items():
+            if folder_path.endswith(folder):
+                _, file_extension = os.path.splitext(file_name)
+                if file_extension.lower() in extensions:
+                    s3_key = f"{folder}/{file_name}"
+                    self.uploader.files_to_upload.append((file_path, s3_key))
+                    break
+
+    def start_monitoring(self):
+        """
+        Starts monitoring file creation events.
+        """
+        print("Monitoring 'data' folder for new files...")
+
+        data_folder = self.uploader.configs.base_folder
+        self.add_watch(data_folder)
+
+        try:
+            while True:
+                for event in self.inotify.read(timeout=0):
+                    if event.mask & flags.CREATE:
+                        self.handle_event(event)
+
+                # Check for new folders and add watch
+                for folder in os.listdir(data_folder):
+                    folder_path = os.path.join(data_folder, folder)
+                    if os.path.isdir(folder_path) and folder_path not in self.watch_descriptors.values():
+                        self.add_watch(folder_path)
+
+                self.uploader.upload_pending_files()
+                self.uploader.purge_old_files()
+                time.sleep(1)
+                
+                
+             while True:
+            self.upload_pending_files()
+            self.purge_old_files()
+            time.sleep(5) # Check every 5 seconds for new files
+            self.scan_folder(data_folder)   
+                
+                
+                
+        finally:
+            self.inotify.close()
+
+# Create an instance of S3Uploader
+uploader = S3Uploader()
+
+# Upload pending files on program start
+for folder in ["texts", "images", "videos"]:
+    folder_path = os.path.join(uploader.configs.base_folder, folder)
+    for file in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, file)
+        s3_key = f"{folder}/{file}"
+        uploader.files_to_upload.append((file_path, s3_key))
+        
+
+
+# Create an instance of FileMonitor and start monitoring
+monitor = FileMonitor(uploader)
+monitor.start_monitoring()
